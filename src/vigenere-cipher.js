@@ -1,78 +1,176 @@
-import { NotImplementedError } from '../extensions/index.js';
+    import { NotImplementedError } from "../extensions/index.js";
 
-/**
- * Implement class VigenereCipheringMachine that allows us to create
- * direct and reverse ciphering machines according to task description
- *
- * @example
- *
- * const directMachine = new VigenereCipheringMachine();
- *
- * const reverseMachine = new VigenereCipheringMachine(false);
- *
- * directMachine.encrypt('attack at dawn!', 'alphonse') => 'AEIHQX SX DLLU!'
- *
- * directMachine.decrypt('AEIHQX SX DLLU!', 'alphonse') => 'ATTACK AT DAWN!'
- *
- * reverseMachine.encrypt('attack at dawn!', 'alphonse') => '!ULLD XS XQHIEA'
- *
- * reverseMachine.decrypt('AEIHQX SX DLLU!', 'alphonse') => '!NWAD TA KCATTA'
- *
- */
- 
- export default class VigenereCipheringMachine {
-   encrypt(message, keyword) {
-
-    var alphabet = this.alphabet(); //get the alphabet
-    var customKey = this.keywordResize(message, keyword); //get the keyword, normalized for the length of the message
-    var splitMsg = message.split("");
-
-    var encodedLetters = splitMsg.map(function(element, index){
-      var msgLetterPosition = alphabet.indexOf(element); //finds the index of each letter in the message
-      var keywordLetterPosition = alphabet.indexOf(customKey[index]); //finds the index of each letter in the customKey
-      var encodedLetterPosition = msgLetterPosition + keywordLetterPosition; //adds the index of message & customKey index together and 'circles' back if greater than alphabet
-      if(encodedLetterPosition > alphabet.length) encodedLetterPosition -= alphabet.length; //if new key is greater than the alphabet it subtracts the length of the alphabet
-      return alphabet[encodedLetterPosition]; //returns the new encoded letter
-    })
-
-    return encodedLetters.join("").toUpperCase(); //joins the array of encoded letters back together
-  }
-  decrypt(message, keyword) {
-    var alphabet = this.alphabet();
-    var customKey = this.keywordResize(message, keyword);
-    var splitMsg = message.split("");
-    //mapping decoded message
-    var decodedLetters = splitMsg.map(function(element, index){
-      var letterIndex = alphabet.indexOf(element) - alphabet.indexOf(customKey[index]);
-      if(letterIndex < 0) letterIndex += alphabet.length;
-      return alphabet[letterIndex];
-    });
-    return decodedLetters.join("").toUpperCase();
-  }
-   //Adjusts the side of the keyword to match the size of the message
-    keywordResize = function(message, keyword) {
-      var result = "";
-      var splitMsg = keyword.split("");
-      for (var i = 0; i < message.length; i++ ) {
-        var position = i % keyword.length;
-        console.log('position: ', position);
-        result += splitMsg[position];
+    /**
+     * Implement class VigenereCipheringMachine that allows us to create
+     * direct and reverse ciphering machines according to task description
+     *
+     * @example
+     *
+     * const directMachine = new VigenereCipheringMachine();
+     *
+     * const reverseMachine = new VigenereCipheringMachine(false);
+     *
+     * directMachine.encrypt('attack at dawn!', 'alphonse') => 'AEIHQX SX DLLU!'
+     *
+     * directMachine.decrypt('AEIHQX SX DLLU!', 'alphonse') => 'ATTACK AT DAWN!'
+     *
+     * reverseMachine.encrypt('attack at dawn!', 'alphonse') => '!ULLD XS XQHIEA'
+     *
+     * reverseMachine.decrypt('AEIHQX SX DLLU!', 'alphonse') => '!NWAD TA KCATTA'
+     *
+     */
+    export default class VigenereCipheringMachine {
+      constructor(directMode = true) {
+        this.directMode = directMode;
       }
-       console.log('result= ', result);
-      return result;
+
+      prepareKey(message, key) {
+        let preparedKey = [];
+        let currentKeyIndex = 0;
+        const letters = /[A-Za-z]/;
+        for (let i = 0; i < message.length; i++) {
+          if (currentKeyIndex === key.length) {
+            currentKeyIndex = 0;
+          }
+          if (letters.test(message[i])) {
+            preparedKey.push(key[currentKeyIndex]);
+            currentKeyIndex += 1;
+          } else {
+            preparedKey.push(message[i]);
+          }
+        }
+        return preparedKey.join("");
+      }
+
+      convertToNumbers(str) {
+        const alphabet = [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E",
+          "F",
+          "G",
+          "H",
+          "I",
+          "J",
+          "K",
+          "L",
+          "M",
+          "N",
+          "O",
+          "P",
+          "Q",
+          "R",
+          "S",
+          "T",
+          "U",
+          "V",
+          "W",
+          "X",
+          "Y",
+          "Z",
+        ];
+        let strUpperCase = str.toUpperCase();
+        let converted = [];
+        for (let i = 0; i < strUpperCase.length; i++) {
+          if (alphabet.includes(strUpperCase[i])) {
+            converted.push(alphabet.indexOf(strUpperCase[i]));
+          } else {
+            converted.push(strUpperCase.charCodeAt(i));
+          }
+        }
+
+        return converted;
+      }
+
+      convertToLetters(arr) {
+        const alphabet = [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E",
+          "F",
+          "G",
+          "H",
+          "I",
+          "J",
+          "K",
+          "L",
+          "M",
+          "N",
+          "O",
+          "P",
+          "Q",
+          "R",
+          "S",
+          "T",
+          "U",
+          "V",
+          "W",
+          "X",
+          "Y",
+          "Z",
+        ];
+        let converted = [];
+        for (let i = 0; i < arr.length; i++) {
+          if (arr[i] < 26) {
+            converted.push(alphabet[arr[i]]);
+          } else {
+            converted.push(String.fromCharCode(arr[i]));
+          }
+        }
+
+        return converted;
+      }
+
+      encrypt(message, key) {
+        if (!message || !key) {
+          throw new Error("Incorrect arguments!");
+        }
+        let preparedKey = this.prepareKey(message, key);
+        let convertedMessage = this.convertToNumbers(message);
+        let convertedKey = this.convertToNumbers(preparedKey);
+        let result = [];
+        for (let i = 0; i < convertedMessage.length; i++) {
+          if (convertedMessage[i] < 26) {
+            result.push(
+              (Number.parseInt(convertedMessage[i]) +
+                Number.parseInt(convertedKey[i])) %
+                26
+            );
+            continue;
+          } else {
+            result.push(convertedMessage[i]);
+          }
+        }
+        result = this.convertToLetters(result);
+
+        return this.directMode ? result.join("") : result.reverse().join("");
+      }
+
+      decrypt(message, key) {
+        if (!message || !key) {
+          throw new Error("Incorrect arguments!");
+        }
+        let preparedKey = this.prepareKey(message, key);
+        let convertedMessage = this.convertToNumbers(message);
+        let convertedKey = this.convertToNumbers(preparedKey);
+        let result = [];
+        for (let i = 0; i < convertedMessage.length; i++) {
+          if (convertedMessage[i] < 26) {
+            if (convertedMessage[i] < convertedKey[i]) {
+              result.push(convertedMessage[i] + 26 - convertedKey[i]);
+            } else {
+              result.push(convertedMessage[i] - convertedKey[i]);
+            }
+          } else {
+            result.push(convertedMessage[i]);
+          }
+        }
+        result = this.convertToLetters(result);
+
+        return this.directMode ? result.join("") : result.reverse().join("");
+      }
     }
-
-//Returns the alphabet as an array
-    alphabet = function(){
-      var alphabet = "abcdefghijklmnopqrstuvwxyz";
-      alphabet = alphabet.split("")
-      return alphabet;
-    }
-
-}
-
-const directMachine = new VigenereCipheringMachine();
-console.log(directMachine.encrypt('attack at dawn!', 'alphonse'));
-// => 'AEIHQX SX DLLU!'
-// console.log(directMachine.decrypt('AEIHQX SX DLLU!', 'alphonse'));
-//  => 'ATTACK AT DAWN!'
